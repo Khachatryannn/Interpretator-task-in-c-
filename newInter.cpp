@@ -3,7 +3,7 @@
 #include <vector>
 #include <regex>
 #include <fstream>
-// #include "testing.cpp"
+#include "newInter.h"
 
 
 
@@ -18,12 +18,13 @@ std::regex valValid("^(YES|NO)$");
 std::regex valArray("^([0-9]+(\\.[0-9]+)?|\".*\"|None|YES|NO)(, [0-9]+(\\.[0-9]+)?|, \".*\"|, None|, YES|, NO)*$");
 
 std::regex keyword("^(if|else|while|for|stop|equ|notequ|big|small|X)$");
-std::regex type("^(number|dot|valid|word|none|array|foo)$"); // horinvac barer for types 
+std::regex type("^(number|dot|valid|word|none|array|foo)$"); // horinvac barer for types + double 
 
 std::regex exprBool("^[0-9]+(\\.[0-9]+)?((equ|notequ|big|small)[0-9]+(\\.[0-9]+)?)+$");
 std::regex exprNum("^[0-9]+(\\.[0-9]+)?([+\\-*/%][0-9]+(\\.[0-9]+)?)+$");
 std::regex exprStr("^(\".*\")(\\+\".*\")+$");
 
+// nayev petqa avelacnel regex for a function support
 
 std::vector<std::string> ids;
 
@@ -91,7 +92,6 @@ class Token {
 			return posit;
 		}
 };
-
 
 class Lexer {
 	private:
@@ -331,9 +331,8 @@ bool syntaxType (Lexer& x){
 
 	return flag;
 }
-					
-				
-					
+
+
 bool syntaxFor(Lexer& x){
 	std::vector<Token> res = x.getTokenTB();
 	int size = res.size();
@@ -457,7 +456,7 @@ bool syntaxWhileIf (Lexer& x){
 			return false;
 		}
 	} else {
-		std::cout << "ogtagorcvac che { operator@" << std::endl;
+		std::cout << "ogtagorcvac che '{' operator@" << std::endl;
 		return false;
 	}
 
@@ -478,8 +477,6 @@ bool syntaxElse(Lexer& x){
 	return flag;
 }
 
-	
-
 bool syntaxAnalize(Lexer& x){
 	std::vector<Token> res = x.getTokenTB();
 	bool flag = false;
@@ -499,112 +496,47 @@ bool syntaxAnalize(Lexer& x){
 		std::cout << "tox@ sxal e sksvum" << std::endl;
 		return false;
 	}
-
 	return flag;
 }
 
-
-// int main () {
-// 	bool flag = true;
-// 	std::string str;
-// 	std::stack<char> s;
-// 	std::cout << "Enter the file name" << std::endl;
-// 	std::cin >> str;
-// 	std::ifstream read;
-// 	read.open(str);	
-	
-// 	if (!read.is_open()){
-// 		throw std::invalid_argument("Error file isn't open");
-// 	}
-	
-// while (std::getline(read, str)) {
-//         for (char ch : str) {
-//             if (ch == '(' || ch == '{') {
-//                 s.push(ch);
-//             } else if (ch == ')' || ch == '}') {
-//                 if (s.empty() || (ch == ')' && s.top() != '(') || (ch == '}' && s.top() != '{')) {
-//                     flag = false;
-//                     return 0;
-//                 } else {
-//                     s.pop();
-//                 }
-//             }
-//         }
-//     }
-
-//     if (!s.empty()) {
-//         flag = false;
-//     }	
-// 	read.clear();
-// 	read.seekg(0, std::ios::beg);
-	
-// 	if (flag){
-// 		while (std::getline(read, str)){
-// 			if (str.empty()){
-// 				continue;
-// 			}
-// 			std::vector<std::string> tmp = tokenisation(str);
-// 			Lexer x = tokensInfo(tmp);
-// 			std::vector<Token> result = x.getTokenTB();
-		
-// 			std::cout << syntaxAnalize(x) << std::endl;
-// 		}
-
-// 		return 0;
-// 	} else {
-// 		std::cout << "cragrum pakagcer@ sxal en trvac" << std::endl;
-// 		throw std::invalid_argument("");
-// 	}
-
-// 	return 0;
-// }		
-	
 int main() {
-    bool flag = true;
-    std::string str;
-    std::stack<char> s;
-
+    std::string filename;
     std::cout << "Enter the file name: ";
-    std::cin >> str;
+    std::cin >> filename;
 
-    std::ifstream read;
-    read.open(str);
-
-    try {
-        if (!read.is_open()) {
-            throw std::runtime_error("Error: Unable to open file.");
-        }
-
-        while (std::getline(read, str)) {
-            for (char ch : str) {
-                if (ch == '(' || ch == '{') {
-                    s.push(ch);
-                } else if (ch == ')' || ch == '}') {
-                    if (s.empty() || (ch == ')' && s.top() != '(') || (ch == '}' && s.top() != '{')) {
-                        flag = false;
-                        break;
-                    } else {
-                        s.pop();
-                    }
-                }
-            }
-
-        }
-    } catch (const std::exception& e) {
-        std::cerr << e.what() << std::endl;
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cout << "Error: Unable to open file." << std::endl;
         return 1;
     }
 
-    if (!s.empty()) {
-        flag = false;
+    bool syntaxError = false;
+    std::string line;
+    Lexer lexer;
+    
+    try {
+        while (std::getline(file, line)) {
+            std::vector<std::string> tokens = tokenisation(line);
+            Lexer lineLexer = tokensInfo(tokens);
+            
+            if (!syntaxAnalize(lineLexer)) {
+                syntaxError = true;
+                break;
+            }
+        }
+        
+        if (!syntaxError) {
+            std::cout << "Syntax nalysis completed. No errors found." << std::endl;
+        }
+    } catch (const std::invalid_argument& e) {
+        std::cout << "Syntax error: " << e.what() << std::endl;
+        syntaxError = true;
     }
 
-    read.close(); // Closing the file after reading
+    file.close();
 
-    if (flag) {
-        std::cout << "File processed successfully." << std::endl;
-    } else {
-        std::cout << "Error , not allowed parentheses or braces." << std::endl;
+    if (syntaxError) {
+        std::cout << "Error: Syntax or type error found. Program terminated." << std::endl;
         return 1;
     }
 

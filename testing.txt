@@ -1,0 +1,5 @@
+number x1 = 30;
+number x2 = 65;
+
+
+
